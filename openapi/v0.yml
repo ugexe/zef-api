@@ -1,0 +1,114 @@
+---
+swagger: '2.0'
+info:
+  title: Zef API
+  version: '0.0.1'
+  description: API for Perl6 module discovery and recommendation
+consumes:
+  - application/json
+produces:
+  - application/json
+securityDefinitions:
+  oauthAccessCode:
+    type: oauth2
+    flow: accessCode
+    authorizationUrl: http://localhost:5000/oauth/authorize
+    tokenUrl: http://localhost:5000/oauth/access_token
+    scopes:
+      distributions:search: Query distributions
+security:
+  - oauthAccessCode:
+    - distributions:search
+basePath: /api
+tags:
+  - name: Recommendation Manager
+    description: Makes recommendations for distributions
+paths:
+  /dependency_graph:
+    post:
+      summary: Access to all meta data required to install a given identity
+      description: Given a distribution or module identity, return a list of meta data of all distributions required to install the requested identity
+      operationId: postDependencyGraph
+      x-mojo-name: dependency_graph
+      x-mojo-to: Distributions#dependency_graph
+      tags:
+        - Recommendation Manager
+      parameters:
+        - name: body
+          in: body
+          description: Meta data for all modules required to fully resolve the matching distribution
+          schema:
+            $ref: '#/definitions/metaSpec'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/metaSpecList'
+  /candidates:
+    post:
+      summary: Get a list of all distributions that match the given input
+      description: Given a distribution or module identity, return a list of meta data of all matching distributions
+      operationId: candidates
+      x-mojo-name: candidates
+      x-mojo-to: Distributions#candidates
+      tags:
+        - Recommendation Manager
+      parameters:
+        - name: body
+          in: body
+          description: Meta data for all modules required to fully resolve the matching distribution
+          schema:
+            $ref: '#/definitions/metaSpec'
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/metaSpecList'
+  /available:
+    get:
+      summary: Get a list of all distributions
+      operationId: available
+      x-mojo-name: available
+      x-mojo-to: Distributions#available
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: '#/definitions/metaSpecList'
+definitions:
+  metaSpecList:
+    type: object
+    required:
+      - success
+      - total
+      - data
+    properties:
+      success:
+        type: integer
+        description: If the resolve request is a success
+      total:
+        type: integer
+        description: Number of distributions required
+      data:
+        title: resolveGraph
+        description: List of all distributions required to install a requested identity
+        type: array
+        items:
+          $ref: '#/definitions/metaSpec'
+  metaSpec:
+    type: object
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        description: Distributions the provide this exact short-name value
+      auth:
+        type: string
+        description: Match against this auth
+      version:
+        type: string
+        description: Match against this version
+      download-uri:
+        type: string
+        description: URI where distribution can be downloaded
